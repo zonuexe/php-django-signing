@@ -15,7 +15,17 @@ use function time;
  */
 class TimestampSigner extends Signer
 {
-    protected string $timestamp_salt = 'django.core.signing.TimestampSigner';
+    /**
+     * @phpstan-param non-empty-string $sep
+     */
+    public function __construct(
+        string $secret,
+        string $salt = 'django.core.signing.TimestampSigner',
+        string $sep = ':',
+        string $algorithm = 'sha256',
+    ) {
+        parent::__construct($secret, $salt, $sep, $algorithm);
+    }
 
     public function make_timestamp(): string
     {
