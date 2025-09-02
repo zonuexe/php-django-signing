@@ -31,11 +31,12 @@ class TimestampSignerTest extends TestCase
         $value = 'hello';
         $signed = $this->signer->sign($value);
         $parts = explode($this->signer->sep, $signed);
-        // Should be value, timestamp, signature
         $this->assertCount(3, $parts);
-        $this->assertSame($value, $parts[0]);
-        $this->assertNotEmpty($parts[1]);
-        $this->assertNotEmpty($parts[2]);
+
+        [$actualValue, $actualTimestamp, $actualSignature] = $parts;
+        $this->assertSame($value, $actualValue);
+        $this->assertNotEmpty($actualTimestamp);
+        $this->assertNotEmpty($actualSignature);
     }
 
     public function testUnsignWithMaxAgeValid(): void
@@ -50,14 +51,17 @@ class TimestampSignerTest extends TestCase
     public function testUnsignWithMaxAgeExpired(): void
     {
         $value = 'baz';
+        $salt = 'test.salt';
         // Manually create a signed value with an old timestamp
         $oldTimestamp = Utils::b62_encode(time() - 1000); // @phpstan-ignore argument.type
         $valueWithTs = $value . $this->signer->sep . $oldTimestamp;
-        $signed = (new Signer('test-secret'))->sign($valueWithTs);
+        $signed = (new Signer('test-secret', $salt))->sign($valueWithTs);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Signature has expired');
-        $this->signer->unsign($signed, 1);
+
+        $signer = new TimestampSigner('test-secret', $salt);
+        $signer->unsign($signed, 1);
     }
 
     public function testUnsignBadFormat(): void

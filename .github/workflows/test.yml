@@ -1,6 +1,10 @@
 name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   test:
@@ -25,6 +29,19 @@ jobs:
       with:
         php-version: ${{ matrix.php-version }}
         tools: composer
+
+    - name: Get Composer cache directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache Composer dependencies
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}-${{ matrix.php-version }}-${{ matrix.prefer-lowest }}
+        restore-keys: |
+          ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}-${{ matrix.php-version }}-
+          ${{ runner.os }}-composer-
 
     - name: Install dependencies
       run: |
